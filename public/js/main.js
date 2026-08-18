@@ -192,9 +192,12 @@ function update(dt) {
 
   updateStarfield(dt);
 
-  camera.position.x += (player.position.x * 0.25 - camera.position.x) * 0.06;
-  camera.position.y += ((2.2 + player.position.y * 0.15) - camera.position.y) * 0.06;
-  camera.lookAt(player.position.x * 0.3, player.position.y * 0.3, -10);
+  // Follow the player closely enough that it can never drift toward (or past)
+  // the frame edge at the extremes of BOUND_X/BOUND_Y - x tracks fully, y
+  // mostly, so there's still a touch of parallax without losing the ship.
+  camera.position.x += (player.position.x - camera.position.x) * 0.12;
+  camera.position.y += ((2.2 + player.position.y * 0.6) - camera.position.y) * 0.12;
+  camera.lookAt(player.position.x, player.position.y * 0.6, -10);
   applyShake(dt);
 
   ui.updatePowerupHud();
