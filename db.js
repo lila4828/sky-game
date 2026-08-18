@@ -15,6 +15,16 @@ async function initDb() {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS site_stats (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      visits INTEGER NOT NULL DEFAULT 0,
+      plays INTEGER NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT NOW(),
+      CHECK (id = 1)
+    )
+  `);
+  await pool.query(`INSERT INTO site_stats (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
 }
 
 module.exports = { pool, initDb };

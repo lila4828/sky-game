@@ -63,6 +63,33 @@ app.post('/api/leaderboard', async (req, res) => {
   }
 });
 
+app.post('/api/stats/visit', async (req, res) => {
+  try {
+    await pool.query('UPDATE site_stats SET visits = visits + 1, updated_at = NOW() WHERE id = 1');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(200).json({ ok: false });
+  }
+});
+
+app.post('/api/stats/play', async (req, res) => {
+  try {
+    await pool.query('UPDATE site_stats SET plays = plays + 1, updated_at = NOW() WHERE id = 1');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(200).json({ ok: false });
+  }
+});
+
+app.get('/api/stats', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT visits, plays FROM site_stats WHERE id = 1');
+    res.json(result.rows[0] || { visits: 0, plays: 0 });
+  } catch (err) {
+    res.json({ visits: 0, plays: 0 });
+  }
+});
+
 initDb()
   .catch((err) => {
     console.error('DB init failed - leaderboard endpoints will return errors until DATABASE_URL is set:', err.message);
