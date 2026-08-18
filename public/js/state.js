@@ -11,7 +11,7 @@ export const state = {
   enemySpeed: 6.5,
   fireCooldown: 0,
   invincible: 0,
-  nextBossScore: 250,
+  nextBossScore: 500,
   bossActive: false,
   heartTimer: 12,
   powerupTimer: 18,

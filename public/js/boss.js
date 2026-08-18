@@ -2,8 +2,8 @@ import { scene } from './three-scene.js';
 import { state } from './state.js';
 import { BOSS_TYPES, MINIBOSS, BOUND_X } from './constants.js';
 import { disposeAndRemove, makeEmojiSprite, spawnExplosion, shakeCamera } from './utils3d.js';
-import { sfxHit, sfxExplode } from './audio.js';
-import { showBanner } from './ui.js';
+import { sfxHit, sfxExplode, sfxBossAppear } from './audio.js';
+import { showBanner, flashBoss } from './ui.js';
 import { player } from './player.js';
 import { bullets } from './weapons.js';
 import { spawnPowerupPickup } from './powerups.js';
@@ -72,6 +72,9 @@ export function spawnBoss() {
   bossBarEl.classList.remove('hidden');
   bossBarFillEl.style.width = '100%';
   showBanner(type.crown + ' ' + type.name + ' 등장!');
+  flashBoss();
+  shakeCamera(0.45, 0.8);
+  sfxBossAppear();
 }
 
 export function spawnMiniboss() {
@@ -92,6 +95,7 @@ export function spawnMiniboss() {
   bossBarEl.classList.remove('hidden');
   bossBarFillEl.style.width = '100%';
   showBanner(MINIBOSS.emoji + ' ' + MINIBOSS.name + ' 접근!');
+  shakeCamera(0.18, 0.35);
 }
 
 function endBoss(defeated) {
@@ -99,7 +103,7 @@ function endBoss(defeated) {
   bossBarEl.classList.add('hidden');
   if (boss) { disposeAndRemove(boss.mesh); boss = null; }
   if (defeated) {
-    state.nextBossScore = state.score + 400 + state.level * 60;
+    state.nextBossScore = state.score + 650 + state.level * 90;
   }
 }
 

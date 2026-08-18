@@ -1,9 +1,11 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
 import { BOUND_X, BOUND_Y_MIN, BOUND_Y_MAX, WEAPON_DEFS, WEAPON_PICKUP_TYPES } from './constants.js';
-import { disposeAndRemove, makeEmojiSprite } from './utils3d.js';
+import { disposeAndRemove, makeEmojiSprite, spawnExplosion } from './utils3d.js';
 import { player } from './player.js';
 import { sfxPowerup, sfxLifeUp } from './audio.js';
+
+const PICKUP_RADIUS = 1.1;
 
 export const heartPickups = [];
 export const powerupPickups = [];
@@ -18,7 +20,12 @@ function iconFor(type) {
 function glowFor(type) {
   if (type === 'rapid') return 0xffe066;
   if (type === 'shield') return 0x3fa8ff;
-  return 0xa0ffcc;
+  return WEAPON_DEFS[type].color;
+}
+function labelFor(type) {
+  if (type === 'rapid') return '⚡ 연사 강화!';
+  if (type === 'shield') return '🛡 실드 획득!';
+  return WEAPON_DEFS[type].icon + ' ' + WEAPON_DEFS[type].label + ' 장착!';
 }
 
 export function resetPowerups() {
@@ -47,7 +54,7 @@ export function spawnPowerupPickup() {
   powerupPickups.push({ mesh: sprite, type: type, speed: 8, driftPhase: Math.random() * Math.PI * 2 });
 }
 
-export function applyPowerup(type) {
+export function applyPowerup(type, pos, callbacks) {
   sfxPowerup();
   if (type === 'rapid') {
     state.rapidFireTimer = 8;
@@ -56,6 +63,10 @@ export function applyPowerup(type) {
   } else {
     state.weapon = type;
     state.weaponTimer = 10;
+  }
+  if (callbacks) {
+    spawnExplosion(callbacks.particles, pos, glowFor(type));
+    callbacks.onPickup(labelFor(type));
   }
 }
 
@@ -71,12 +82,15 @@ export function updatePickups(dt, callbacks) {
       heartPickups.splice(i, 1);
       continue;
     }
-    if (hp.mesh.position.distanceTo(player.position) < 0.9) {
+    if (hp.mesh.position.distanceTo(player.position) < PICKUP_RADIUS) {
+      const pos = hp.mesh.position.clone();
       disposeAndRemove(hp.mesh);
       heartPickups.splice(i, 1);
       if (state.lives < state.maxLives) {
         state.lives += 1;
         sfxLifeUp();
+        spawnExplosion(callbacks.particles, pos, 0x33ff88);
+        callbacks.onPickup('❤️ 생명 +1!');
         callbacks.onLifeChange();
       }
     }
@@ -93,10 +107,12 @@ export function updatePickups(dt, callbacks) {
       powerupPickups.splice(i, 1);
       continue;
     }
-    if (pw.mesh.position.distanceTo(player.position) < 0.9) {
-      applyPowerup(pw.type);
+    if (pw.mesh.position.distanceTo(player.position) < PICKUP_RADIUS) {
+      const pos = pw.mesh.position.clone();
+      const type = pw.type;
       disposeAndRemove(pw.mesh);
       powerupPickups.splice(i, 1);
+      applyPowerup(type, pos, callbacks);
     }
   }
 }

@@ -30,3 +30,9 @@ export function sfxExplode() { beep(140, 0.25, 'sawtooth', 0.08); }
 export function sfxHit() { beep(90, 0.35, 'sawtooth', 0.1); }
 export function sfxPowerup() { beep(660, 0.16, 'sine', 0.07); beep(990, 0.16, 'sine', 0.07); }
 export function sfxLifeUp() { beep(660, 0.18, 'sine', 0.07); beep(880, 0.18, 'sine', 0.07); }
+
+export function sfxBossAppear() {
+  beep(220, 0.4, 'sawtooth', 0.1);
+  setTimeout(function () { beep(160, 0.4, 'sawtooth', 0.1); }, 140);
+  setTimeout(function () { beep(110, 0.6, 'sawtooth', 0.12); }, 280);
+}

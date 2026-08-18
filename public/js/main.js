@@ -80,7 +80,7 @@ function resetGame() {
   state.enemySpeed = 6.5 * diff.speedMult;
   state.fireCooldown = 0;
   state.invincible = 1.8;
-  state.nextBossScore = 250;
+  state.nextBossScore = 500;
   state.heartTimer = 14;
   state.powerupTimer = 18 + Math.random() * 8;
 
@@ -174,7 +174,7 @@ function update(dt) {
   }
 
   updateEnemies(dt, { loseLife: loseLife, addScore: addScore, particles: particles });
-  updatePickups(dt, { onLifeChange: ui.updateHearts });
+  updatePickups(dt, { onLifeChange: ui.updateHearts, onPickup: ui.showPickupToast, particles: particles });
 
   updateBoss(dt, { addScore: addScore, particles: particles });
   updateMiniboss(dt, { addScore: addScore, particles: particles });
@@ -192,12 +192,12 @@ function update(dt) {
 
   updateStarfield(dt);
 
-  // Follow the player closely enough that it can never drift toward (or past)
-  // the frame edge at the extremes of BOUND_X/BOUND_Y - x tracks fully, y
-  // mostly, so there's still a touch of parallax without losing the ship.
-  camera.position.x += (player.position.x - camera.position.x) * 0.12;
-  camera.position.y += ((2.2 + player.position.y * 0.6) - camera.position.y) * 0.12;
-  camera.lookAt(player.position.x, player.position.y * 0.6, -10);
+  // Follow the player fully on both axes so it can never drift toward (or
+  // past, or behind the touch UI) the frame edge at the extremes of
+  // BOUND_X/BOUND_Y - only the fixed "+2.2" height offset keeps some framing.
+  camera.position.x += (player.position.x - camera.position.x) * 0.14;
+  camera.position.y += ((2.2 + player.position.y) - camera.position.y) * 0.14;
+  camera.lookAt(player.position.x, player.position.y, -10);
   applyShake(dt);
 
   ui.updatePowerupHud();

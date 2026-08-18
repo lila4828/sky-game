@@ -12,18 +12,23 @@ export const bullets = [];
 const bulletGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.5, 6);
 registerSharedGeometry(bulletGeo);
 
-function makeBulletMesh() {
-  const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+function makeBulletMesh(color) {
+  const mat = new THREE.MeshBasicMaterial({ color: color });
   const mesh = new THREE.Mesh(bulletGeo, mat);
   mesh.rotation.x = Math.PI / 2;
   return mesh;
 }
 
 function addBullet(pos, vel, pierceLeft) {
-  const mesh = makeBulletMesh();
+  const color = WEAPON_DEFS[state.weapon].color;
+  const mesh = makeBulletMesh(color);
   mesh.position.copy(pos);
   scene.add(mesh);
-  bullets.push({ mesh: mesh, vel: vel, pierceLeft: pierceLeft, homing: state.weapon === 'homing' });
+  if (state.weapon === 'homing') {
+    const light = new THREE.PointLight(color, 0.8, 3);
+    mesh.add(light);
+  }
+  bullets.push({ mesh: mesh, vel: vel, pierceLeft: pierceLeft, homing: state.weapon === 'homing', color: color });
 }
 
 export function resetWeapons() {
@@ -97,7 +102,7 @@ export function updateBullets(dt, callbacks) {
     for (let ei = enemies.length - 1; ei >= 0; ei--) {
       const enemy = enemies[ei];
       if (b.mesh.position.distanceTo(enemy.mesh.position) < 0.75) {
-        spawnExplosion(callbacks.particles, enemy.mesh.position, 0xffaa33);
+        spawnExplosion(callbacks.particles, enemy.mesh.position, b.color);
         sfxExplode();
         disposeAndRemove(enemy.mesh);
         enemies.splice(ei, 1);

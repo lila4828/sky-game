@@ -10,10 +10,10 @@ export const DIFFICULTY_PRESETS = {
 };
 
 export const WEAPON_DEFS = {
-  basic:  { label: '기본',   icon: null },
-  pierce: { label: '관통탄', icon: '🎯', pierceCount: 3 },
-  spread: { label: '샷건',   icon: '🔱', spreadCount: 3, spreadAngle: 0.22 },
-  homing: { label: '유도탄', icon: '🚀', turnRate: 3.2 }
+  basic:  { label: '기본',   icon: null,  color: 0x00ffff },
+  pierce: { label: '관통탄', icon: '🎯', color: 0xffd23b, pierceCount: 3 },
+  spread: { label: '샷건',   icon: '🔱', color: 0xff8c3b, spreadCount: 3, spreadAngle: 0.22 },
+  homing: { label: '유도탄', icon: '🚀', color: 0xb84bff, turnRate: 3.2 }
 };
 export const WEAPON_PICKUP_TYPES = ['pierce', 'spread', 'homing'];
 

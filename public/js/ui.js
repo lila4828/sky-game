@@ -17,7 +17,9 @@ export const muteBtn = document.getElementById('muteBtn');
 const powerupHudEl = document.getElementById('powerupHud');
 const comboBadgeEl = document.getElementById('comboBadge');
 const bannerEl = document.getElementById('banner');
+const pickupToastEl = document.getElementById('pickupToast');
 const hitFlashEl = document.getElementById('hitFlash');
+const bossFlashEl = document.getElementById('bossFlash');
 const difficultyButtons = Array.prototype.slice.call(document.querySelectorAll('.diff-btn'));
 
 export function updateHearts() {
@@ -74,11 +76,29 @@ export function showBanner(text) {
   bannerTimer = setTimeout(function () { bannerEl.classList.add('hidden'); }, 1300);
 }
 
+let toastTimer = null;
+export function showPickupToast(text) {
+  pickupToastEl.textContent = text;
+  pickupToastEl.classList.remove('hidden');
+  pickupToastEl.style.animation = 'none';
+  void pickupToastEl.offsetWidth;
+  pickupToastEl.style.animation = '';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { pickupToastEl.classList.add('hidden'); }, 1100);
+}
+
 let hitFlashTimer = null;
 export function flashHit() {
   hitFlashEl.style.opacity = '1';
   if (hitFlashTimer) clearTimeout(hitFlashTimer);
   hitFlashTimer = setTimeout(function () { hitFlashEl.style.opacity = '0'; }, 160);
+}
+
+let bossFlashTimer = null;
+export function flashBoss() {
+  bossFlashEl.style.opacity = '1';
+  if (bossFlashTimer) clearTimeout(bossFlashTimer);
+  bossFlashTimer = setTimeout(function () { bossFlashEl.style.opacity = '0'; }, 450);
 }
 
 export function initDifficultyButtons() {
