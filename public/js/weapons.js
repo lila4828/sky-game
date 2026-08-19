@@ -1,6 +1,6 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
-import { WEAPON_DEFS } from './constants.js';
+import { WEAPON_DEFS, MAX_HOMING_BULLETS } from './constants.js';
 import { disposeAndRemove, registerSharedGeometry, spawnExplosion } from './utils3d.js';
 import { registerKill } from './combo.js';
 import { sfxShoot, sfxExplode } from './audio.js';
@@ -28,7 +28,7 @@ function addBullet(pos, vel, pierceLeft) {
     const light = new THREE.PointLight(color, 0.8, 3);
     mesh.add(light);
   }
-  bullets.push({ mesh: mesh, vel: vel, pierceLeft: pierceLeft, homing: state.weapon === 'homing', color: color });
+  bullets.push({ mesh: mesh, vel: vel, pierceLeft: pierceLeft, homing: state.weapon === 'homing', color: color, target: null });
 }
 
 export function resetWeapons() {
@@ -52,6 +52,7 @@ export function trySpawnBullet(dt, keys) {
   const speed = 42;
   const def = WEAPON_DEFS[state.weapon];
 
+  let spawned = true;
   if (state.weapon === 'spread') {
     for (let i = 0; i < def.spreadCount; i++) {
       const offset = (i - (def.spreadCount - 1) / 2) * def.spreadAngle;
@@ -60,11 +61,18 @@ export function trySpawnBullet(dt, keys) {
     }
   } else if (state.weapon === 'pierce') {
     addBullet(origin, new THREE.Vector3(0, 0, -speed), def.pierceCount);
+  } else if (state.weapon === 'homing') {
+    const homingCount = bullets.reduce((n, bl) => n + (bl.homing ? 1 : 0), 0);
+    if (homingCount < MAX_HOMING_BULLETS) {
+      addBullet(origin, new THREE.Vector3(0, 0, -speed), 1);
+    } else {
+      spawned = false;
+    }
   } else {
     addBullet(origin, new THREE.Vector3(0, 0, -speed), 1);
   }
 
-  sfxShoot();
+  if (spawned) sfxShoot();
   state.fireCooldown = state.rapidFireTimer > 0 ? 0.07 : 0.18;
 }
 
@@ -84,9 +92,11 @@ export function updateBullets(dt, callbacks) {
     const b = bullets[i];
 
     if (b.homing) {
-      const target = findNearestEnemy(b.mesh.position);
-      if (target) {
-        const desired = target.mesh.position.clone().sub(b.mesh.position).normalize().multiplyScalar(b.vel.length());
+      if (!b.target || b.target.removed) {
+        b.target = findNearestEnemy(b.mesh.position);
+      }
+      if (b.target) {
+        const desired = b.target.mesh.position.clone().sub(b.mesh.position).normalize().multiplyScalar(b.vel.length());
         b.vel.lerp(desired, Math.min(1, turnRate * dt)).setLength(42);
       }
     }
@@ -104,6 +114,7 @@ export function updateBullets(dt, callbacks) {
       if (b.mesh.position.distanceTo(enemy.mesh.position) < 0.75) {
         spawnExplosion(callbacks.particles, enemy.mesh.position, b.color);
         sfxExplode();
+        enemy.removed = true;
         disposeAndRemove(enemy.mesh);
         enemies.splice(ei, 1);
         const mult = registerKill();

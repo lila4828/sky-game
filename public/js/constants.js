@@ -3,6 +3,11 @@ export const BOUND_Y_MIN = -2.6;
 export const BOUND_Y_MAX = 3.6;
 export const MOVE_SPEED = 7;
 
+export const MAX_HOMING_BULLETS = 8;
+export const CAMERA_FOLLOW_SPEED = 6; // 1/s, frame-rate-independent exponential follow rate
+export const ENEMY_HIT_RADIUS = 0.65;
+export const ENEMY_MISS_RADIUS = 0.8;
+
 export const DIFFICULTY_PRESETS = {
   easy:   { label: '쉬움',   lives: 4, spawnMult: 1.3,  speedMult: 0.85, scoreMult: 0.8 },
   normal: { label: '보통',   lives: 3, spawnMult: 1.0,  speedMult: 1.0,  scoreMult: 1.0 },

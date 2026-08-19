@@ -1,6 +1,6 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
-import { BOUND_X, BOUND_Y_MIN, BOUND_Y_MAX } from './constants.js';
+import { BOUND_X, BOUND_Y_MIN, BOUND_Y_MAX, ENEMY_HIT_RADIUS, ENEMY_MISS_RADIUS } from './constants.js';
 import { disposeAndRemove, makeEmojiSprite, spawnExplosion } from './utils3d.js';
 import { player } from './player.js';
 
@@ -25,7 +25,8 @@ export function spawnEnemy(waveConfig) {
     mesh: sprite,
     speed: state.enemySpeed + Math.random() * 2,
     driftPhase: Math.random() * Math.PI * 2,
-    spin: (Math.random() - 0.5) * 2.2
+    spin: (Math.random() - 0.5) * 2.2,
+    removed: false
   });
 }
 
@@ -41,22 +42,25 @@ export function updateEnemies(dt, callbacks) {
 
     if (en.mesh.position.z > player.position.z + 1) {
       const missDist = Math.hypot(en.mesh.position.x - player.position.x, en.mesh.position.y - player.position.y);
+      en.removed = true;
       disposeAndRemove(en.mesh);
       enemies.splice(i, 1);
-      if (missDist < 1.3) callbacks.loseLife();
+      if (missDist < ENEMY_MISS_RADIUS) callbacks.loseLife();
       continue;
     }
 
     const pd = en.mesh.position.distanceTo(player.position);
-    if (pd < 0.65) {
+    if (pd < ENEMY_HIT_RADIUS) {
       if (state.invincible <= 0 && !shielded) {
         spawnExplosion(callbacks.particles, en.mesh.position, 0xff3b6b);
+        en.removed = true;
         disposeAndRemove(en.mesh);
         enemies.splice(i, 1);
         callbacks.loseLife();
         continue;
       } else if (shielded) {
         spawnExplosion(callbacks.particles, en.mesh.position, 0x3fa8ff);
+        en.removed = true;
         disposeAndRemove(en.mesh);
         enemies.splice(i, 1);
         callbacks.addScore(5);

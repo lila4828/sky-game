@@ -1,6 +1,6 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
-import { BOSS_TYPES, MINIBOSS, BOUND_X, BOSS_LEVEL_INTERVAL, DIFFICULTY_PRESETS } from './constants.js';
+import { BOSS_TYPES, MINIBOSS, BOUND_X, BOSS_LEVEL_INTERVAL, DIFFICULTY_PRESETS, ENEMY_HIT_RADIUS } from './constants.js';
 import { disposeAndRemove, makeEmojiSprite, spawnExplosion, shakeCamera } from './utils3d.js';
 import { sfxHit, sfxExplode, sfxBossAppear } from './audio.js';
 import { showBanner, flashBoss } from './ui.js';
@@ -234,7 +234,7 @@ export function updateEnemyBullets(dt, callbacks) {
       enemyBullets.splice(i, 1);
       continue;
     }
-    if (eb.mesh.position.distanceTo(player.position) < 0.65) {
+    if (eb.mesh.position.distanceTo(player.position) < ENEMY_HIT_RADIUS) {
       if (state.invincible <= 0 && !shielded) {
         disposeAndRemove(eb.mesh);
         enemyBullets.splice(i, 1);

@@ -1,6 +1,6 @@
 import { scene, camera, renderer, updateStarfield } from './three-scene.js';
 import { state } from './state.js';
-import { DIFFICULTY_PRESETS, BOSS_LEVEL_INTERVAL } from './constants.js';
+import { DIFFICULTY_PRESETS, BOSS_LEVEL_INTERVAL, CAMERA_FOLLOW_SPEED } from './constants.js';
 import { loadSettings } from './storage.js';
 import { ensureAudio, sfxHit } from './audio.js';
 import * as ui from './ui.js';
@@ -192,12 +192,15 @@ function update(dt) {
 
   updateStarfield(dt);
 
-  // Follow the player fully on both axes so it can never drift toward (or
-  // past, or behind the touch UI) the frame edge at the extremes of
-  // BOUND_X/BOUND_Y - only the fixed "+2.2" height offset keeps some framing.
-  camera.position.x += (player.position.x - camera.position.x) * 0.14;
-  camera.position.y += ((2.2 + player.position.y) - camera.position.y) * 0.14;
-  camera.lookAt(player.position.x, player.position.y, -10);
+  // Chase the player on both axes with frame-rate-independent exponential
+  // smoothing, so it still fully compensates at rest (no clipping behind the
+  // touch UI at the BOUND_X/BOUND_Y extremes) but lags a beat during fast
+  // moves instead of snapping 1:1 to the ship. lookAt tracks the camera's own
+  // (lagged) position so orientation lags along with translation.
+  const followT = 1 - Math.exp(-CAMERA_FOLLOW_SPEED * dt);
+  camera.position.x += (player.position.x - camera.position.x) * followT;
+  camera.position.y += ((2.2 + player.position.y) - camera.position.y) * followT;
+  camera.lookAt(camera.position.x, camera.position.y - 2.2, -10);
   applyShake(dt);
 
   ui.updatePowerupHud();
