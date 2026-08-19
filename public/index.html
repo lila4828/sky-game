@@ -75,6 +75,10 @@
 
     <div id="gameOverLeaderboard">
       <h3>🏆 TOP 10</h3>
+      <div class="lb-tabs" id="gameOverTabs">
+        <button class="lb-tab selected" data-mode="normal">일반</button>
+        <button class="lb-tab" data-mode="growth">🌱 성장 모드</button>
+      </div>
       <ol id="gameOverLeaderboardList" class="lb-list"></ol>
     </div>
   </div>
@@ -82,6 +86,10 @@
   <div id="leaderboardModal" class="hidden modal-overlay">
     <div class="modal-box">
       <h2>🏆 TOP 10</h2>
+      <div class="lb-tabs" id="leaderboardTabs">
+        <button class="lb-tab selected" data-mode="normal">일반</button>
+        <button class="lb-tab" data-mode="growth">🌱 성장 모드</button>
+      </div>
       <ol id="leaderboardList" class="lb-list"></ol>
       <button id="closeLeaderboardBtn">닫기</button>
     </div>

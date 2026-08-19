@@ -33,6 +33,9 @@ async function initDb() {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  // Added after the table already existed in production - ADD COLUMN IF NOT
+  // EXISTS is a safe no-op migration on every startup for existing databases.
+  await pool.query(`ALTER TABLE leaderboard ADD COLUMN IF NOT EXISTS growth_mode BOOLEAN NOT NULL DEFAULT false`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS site_stats (
       id INTEGER PRIMARY KEY DEFAULT 1,
@@ -53,29 +56,31 @@ async function initDb() {
   `);
 }
 
-async function fetchTopScores(limit) {
+async function fetchTopScores(limit, growthMode) {
   if (!hasDatabase) {
     return memory.leaderboard
+      .filter((r) => !!r.growthMode === !!growthMode)
       .slice()
       .sort((a, b) => b.score - a.score || a.created_at - b.created_at)
       .slice(0, limit);
   }
   const result = await pool.query(
     `SELECT name, score, level, created_at FROM leaderboard
-     ORDER BY score DESC, created_at ASC LIMIT $1`,
-    [limit]
+     WHERE growth_mode = $1
+     ORDER BY score DESC, created_at ASC LIMIT $2`,
+    [!!growthMode, limit]
   );
   return result.rows;
 }
 
-async function insertScore(name, score, level) {
+async function insertScore(name, score, level, growthMode) {
   if (!hasDatabase) {
-    memory.leaderboard.push({ id: memory.nextId++, name, score, level, created_at: Date.now() });
+    memory.leaderboard.push({ id: memory.nextId++, name, score, level, growthMode: !!growthMode, created_at: Date.now() });
     return;
   }
   await pool.query(
-    'INSERT INTO leaderboard (name, score, level) VALUES ($1, $2, $3)',
-    [name, score, level]
+    'INSERT INTO leaderboard (name, score, level, growth_mode) VALUES ($1, $2, $3, $4)',
+    [name, score, level, !!growthMode]
   );
 }
 

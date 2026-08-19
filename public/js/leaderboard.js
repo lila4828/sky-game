@@ -8,6 +8,11 @@ const gameOverListEl = document.getElementById('gameOverLeaderboardList');
 const nicknameInput = document.getElementById('nicknameInput');
 const submitBtn = document.getElementById('submitScoreBtn');
 const submitStatusEl = document.getElementById('submitStatus');
+const modalTabsEl = document.getElementById('leaderboardTabs');
+const gameOverTabsEl = document.getElementById('gameOverTabs');
+
+let modalGrowthMode = false;
+let gameOverGrowthMode = false;
 
 function renderLeaderboard(el, list) {
   el.innerHTML = '';
@@ -36,8 +41,8 @@ function renderLeaderboard(el, list) {
   });
 }
 
-function fetchLeaderboard(targetEl) {
-  fetch('/api/leaderboard').then(function (r) {
+function fetchLeaderboard(targetEl, growthMode) {
+  fetch('/api/leaderboard?growth=' + (growthMode ? '1' : '0')).then(function (r) {
     if (!r.ok) throw new Error('bad response');
     return r.json();
   }).then(function (data) {
@@ -51,20 +56,51 @@ function fetchLeaderboard(targetEl) {
   });
 }
 
+function updateTabSelection(tabsEl, growthMode) {
+  if (!tabsEl) return;
+  Array.prototype.slice.call(tabsEl.querySelectorAll('.lb-tab')).forEach(function (btn) {
+    btn.classList.toggle('selected', (btn.dataset.mode === 'growth') === !!growthMode);
+  });
+}
+
+function wireTabs(tabsEl, onSelect) {
+  if (!tabsEl) return;
+  Array.prototype.slice.call(tabsEl.querySelectorAll('.lb-tab')).forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const growthMode = btn.dataset.mode === 'growth';
+      updateTabSelection(tabsEl, growthMode);
+      onSelect(growthMode);
+    });
+  });
+}
+
 export function refreshGameOverBoard() {
   nicknameInput.value = '';
   submitStatusEl.textContent = '';
   submitBtn.disabled = false;
-  fetchLeaderboard(gameOverListEl);
+  gameOverGrowthMode = !!state.growthMode;
+  updateTabSelection(gameOverTabsEl, gameOverGrowthMode);
+  fetchLeaderboard(gameOverListEl, gameOverGrowthMode);
 }
 
 export function initLeaderboardUI() {
   viewRankBtn.addEventListener('click', function () {
     leaderboardModal.classList.remove('hidden');
-    fetchLeaderboard(leaderboardListEl);
+    modalGrowthMode = !!state.growthMode;
+    updateTabSelection(modalTabsEl, modalGrowthMode);
+    fetchLeaderboard(leaderboardListEl, modalGrowthMode);
   });
   closeLeaderboardBtn.addEventListener('click', function () {
     leaderboardModal.classList.add('hidden');
+  });
+
+  wireTabs(modalTabsEl, function (growthMode) {
+    modalGrowthMode = growthMode;
+    fetchLeaderboard(leaderboardListEl, modalGrowthMode);
+  });
+  wireTabs(gameOverTabsEl, function (growthMode) {
+    gameOverGrowthMode = growthMode;
+    fetchLeaderboard(gameOverListEl, gameOverGrowthMode);
   });
 
   submitBtn.addEventListener('click', function () {
@@ -75,12 +111,14 @@ export function initLeaderboardUI() {
     fetch('/api/leaderboard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, score: state.score, level: state.level })
+      body: JSON.stringify({ name: name, score: state.score, level: state.level, growthMode: !!state.growthMode })
     }).then(function (r) {
       if (!r.ok) throw new Error('bad response');
       return r.json();
     }).then(function (data) {
       submitStatusEl.textContent = '등록 완료!';
+      gameOverGrowthMode = !!state.growthMode;
+      updateTabSelection(gameOverTabsEl, gameOverGrowthMode);
       renderLeaderboard(gameOverListEl, data.leaderboard);
     }).catch(function () {
       submitStatusEl.textContent = '등록 실패 - 다시 시도해주세요';

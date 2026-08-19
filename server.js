@@ -30,7 +30,8 @@ function sanitizeFeedbackMessage(raw) {
 
 app.get('/api/leaderboard', async (req, res) => {
   try {
-    res.json({ leaderboard: await fetchTopScores(TOP_N) });
+    const growthMode = req.query.growth === '1';
+    res.json({ leaderboard: await fetchTopScores(TOP_N, growthMode) });
   } catch (err) {
     console.error('leaderboard fetch error', err);
     res.status(500).json({ error: 'failed to fetch leaderboard' });
@@ -41,6 +42,7 @@ app.post('/api/leaderboard', async (req, res) => {
   const name = sanitizeName(req.body && req.body.name);
   const score = Number(req.body && req.body.score);
   const level = Number(req.body && req.body.level);
+  const growthMode = !!(req.body && req.body.growthMode);
 
   if (!name) return res.status(400).json({ error: 'invalid name' });
   if (!Number.isInteger(score) || score < 0 || score > SCORE_MAX) {
@@ -51,8 +53,8 @@ app.post('/api/leaderboard', async (req, res) => {
   }
 
   try {
-    await insertScore(name, score, level);
-    res.json({ leaderboard: await fetchTopScores(TOP_N) });
+    await insertScore(name, score, level, growthMode);
+    res.json({ leaderboard: await fetchTopScores(TOP_N, growthMode) });
   } catch (err) {
     console.error('leaderboard insert error', err);
     res.status(500).json({ error: 'failed to save score' });
