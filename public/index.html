@@ -34,6 +34,7 @@
 
   <div id="muteBtn">🔊</div>
   <div id="pauseBtn">⏸</div>
+  <div id="feedbackBtn" title="문의하기">💬</div>
 
   <div id="pauseScreen" class="hidden">
     <h1>일 시 정 지</h1>
@@ -83,6 +84,19 @@
       <h2>🏆 TOP 10</h2>
       <ol id="leaderboardList" class="lb-list"></ol>
       <button id="closeLeaderboardBtn">닫기</button>
+    </div>
+  </div>
+
+  <div id="feedbackModal" class="hidden modal-overlay">
+    <div class="modal-box">
+      <h2>💬 문의하기</h2>
+      <div id="feedbackForm">
+        <textarea id="feedbackMessage" maxlength="1000" placeholder="문의하실 내용을 입력해주세요"></textarea>
+        <input id="feedbackContact" maxlength="120" placeholder="답장받을 연락처 (선택)">
+        <button id="submitFeedbackBtn">보내기</button>
+      </div>
+      <p id="feedbackStatus"></p>
+      <button id="closeFeedbackBtn">닫기</button>
     </div>
   </div>
 

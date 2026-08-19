@@ -13,6 +13,7 @@ import { getWaveConfig, applyWaveForLevel, resetWave } from './waves.js';
 import { updateCombo, resetCombo } from './combo.js';
 import { updateParticles, applyShake, disposeAndRemove, shakeCamera } from './utils3d.js';
 import { initLeaderboardUI, refreshGameOverBoard } from './leaderboard.js';
+import { initFeedbackUI } from './feedback.js';
 import { sendVisit, sendPlay } from './stats.js';
 import { initTouchControls } from './touch-controls.js';
 import { registerServiceWorker } from './pwa.js';
@@ -244,6 +245,7 @@ function boot() {
   ui.initGrowthModeButton();
   ui.wireMuteButton();
   initLeaderboardUI();
+  initFeedbackUI();
   registerServiceWorker();
   sendVisit();
   initTouchControls(keys);

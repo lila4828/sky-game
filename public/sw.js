@@ -20,6 +20,7 @@ const SHELL_ASSETS = [
   '/js/boss.js',
   '/js/ui.js',
   '/js/leaderboard.js',
+  '/js/feedback.js',
   '/js/stats.js',
   '/js/touch-controls.js',
   '/js/pwa.js',

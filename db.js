@@ -14,6 +14,8 @@ const pool = hasDatabase
 const memory = {
   leaderboard: [],
   nextId: 1,
+  feedback: [],
+  nextFeedbackId: 1,
   stats: { visits: 0, plays: 0 }
 };
 
@@ -41,6 +43,14 @@ async function initDb() {
     )
   `);
   await pool.query(`INSERT INTO site_stats (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id SERIAL PRIMARY KEY,
+      message TEXT NOT NULL,
+      contact VARCHAR(120),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
 }
 
 async function fetchTopScores(limit) {
@@ -69,6 +79,17 @@ async function insertScore(name, score, level) {
   );
 }
 
+async function insertFeedback(message, contact) {
+  if (!hasDatabase) {
+    memory.feedback.push({ id: memory.nextFeedbackId++, message, contact, created_at: Date.now() });
+    return;
+  }
+  await pool.query(
+    'INSERT INTO feedback (message, contact) VALUES ($1, $2)',
+    [message, contact || null]
+  );
+}
+
 const STAT_FIELDS = ['visits', 'plays'];
 
 async function incrementStat(field) {
@@ -88,4 +109,4 @@ async function getStats() {
   return result.rows[0] || { visits: 0, plays: 0 };
 }
 
-module.exports = { initDb, fetchTopScores, insertScore, incrementStat, getStats };
+module.exports = { initDb, fetchTopScores, insertScore, incrementStat, getStats, insertFeedback };
