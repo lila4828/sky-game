@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const { pool, initDb } = require('./db');
+const { initDb, fetchTopScores, insertScore, incrementStat, getStats } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,18 +20,9 @@ function sanitizeName(raw) {
   return trimmed.length ? trimmed : null;
 }
 
-async function fetchTop() {
-  const result = await pool.query(
-    `SELECT name, score, level, created_at FROM leaderboard
-     ORDER BY score DESC, created_at ASC LIMIT $1`,
-    [TOP_N]
-  );
-  return result.rows;
-}
-
 app.get('/api/leaderboard', async (req, res) => {
   try {
-    res.json({ leaderboard: await fetchTop() });
+    res.json({ leaderboard: await fetchTopScores(TOP_N) });
   } catch (err) {
     console.error('leaderboard fetch error', err);
     res.status(500).json({ error: 'failed to fetch leaderboard' });
@@ -52,11 +43,8 @@ app.post('/api/leaderboard', async (req, res) => {
   }
 
   try {
-    await pool.query(
-      'INSERT INTO leaderboard (name, score, level) VALUES ($1, $2, $3)',
-      [name, score, level]
-    );
-    res.json({ leaderboard: await fetchTop() });
+    await insertScore(name, score, level);
+    res.json({ leaderboard: await fetchTopScores(TOP_N) });
   } catch (err) {
     console.error('leaderboard insert error', err);
     res.status(500).json({ error: 'failed to save score' });
@@ -65,7 +53,7 @@ app.post('/api/leaderboard', async (req, res) => {
 
 app.post('/api/stats/visit', async (req, res) => {
   try {
-    await pool.query('UPDATE site_stats SET visits = visits + 1, updated_at = NOW() WHERE id = 1');
+    await incrementStat('visits');
     res.json({ ok: true });
   } catch (err) {
     res.status(200).json({ ok: false });
@@ -74,7 +62,7 @@ app.post('/api/stats/visit', async (req, res) => {
 
 app.post('/api/stats/play', async (req, res) => {
   try {
-    await pool.query('UPDATE site_stats SET plays = plays + 1, updated_at = NOW() WHERE id = 1');
+    await incrementStat('plays');
     res.json({ ok: true });
   } catch (err) {
     res.status(200).json({ ok: false });
@@ -83,8 +71,7 @@ app.post('/api/stats/play', async (req, res) => {
 
 app.get('/api/stats', async (req, res) => {
   try {
-    const result = await pool.query('SELECT visits, plays FROM site_stats WHERE id = 1');
-    res.json(result.rows[0] || { visits: 0, plays: 0 });
+    res.json(await getStats());
   } catch (err) {
     res.json({ visits: 0, plays: 0 });
   }
