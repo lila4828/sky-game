@@ -1,9 +1,9 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
-import { WEAPON_DEFS, MAX_HOMING_BULLETS } from './constants.js';
+import { WEAPON_DEFS, MAX_HOMING_BULLETS, MIN_FIRE_COOLDOWN } from './constants.js';
 import { disposeAndRemove, registerSharedGeometry, spawnExplosion } from './utils3d.js';
 import { registerKill } from './combo.js';
-import { sfxShoot, sfxExplode } from './audio.js';
+import { sfxShoot, sfxExplode, sfxHit } from './audio.js';
 import { player } from './player.js';
 import { enemies } from './enemies.js';
 
@@ -74,7 +74,8 @@ export function trySpawnBullet(dt, keys) {
 
   if (spawned) {
     sfxShoot();
-    state.fireCooldown = state.rapidFireTimer > 0 ? 0.07 : 0.18;
+    const baseCooldown = state.rapidFireTimer > 0 ? 0.07 : 0.18;
+    state.fireCooldown = Math.max(MIN_FIRE_COOLDOWN, baseCooldown * state.attackSpeedMult);
   }
 }
 
@@ -114,13 +115,19 @@ export function updateBullets(dt, callbacks) {
     for (let ei = enemies.length - 1; ei >= 0; ei--) {
       const enemy = enemies[ei];
       if (b.mesh.position.distanceTo(enemy.mesh.position) < 0.75) {
-        spawnExplosion(callbacks.particles, enemy.mesh.position, b.color);
-        sfxExplode();
-        enemy.removed = true;
-        disposeAndRemove(enemy.mesh);
-        enemies.splice(ei, 1);
-        const mult = registerKill();
-        callbacks.addScore(Math.round(10 * mult));
+        enemy.hp -= state.attackPower;
+        if (enemy.hp <= 0) {
+          spawnExplosion(callbacks.particles, enemy.mesh.position, b.color);
+          sfxExplode();
+          enemy.removed = true;
+          disposeAndRemove(enemy.mesh);
+          enemies.splice(ei, 1);
+          const mult = registerKill();
+          callbacks.addScore(Math.round(10 * mult));
+        } else {
+          spawnExplosion(callbacks.particles, enemy.mesh.position, b.color, 3);
+          sfxHit();
+        }
         b.pierceLeft -= 1;
         if (b.pierceLeft <= 0) {
           disposeAndRemove(b.mesh);

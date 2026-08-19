@@ -1,6 +1,6 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
-import { BOUND_X, BOUND_Y_MIN, BOUND_Y_MAX, ENEMY_HIT_RADIUS, ENEMY_MISS_RADIUS } from './constants.js';
+import { BOUND_X, BOUND_Y_MIN, BOUND_Y_MAX, ENEMY_HIT_RADIUS, ENEMY_MISS_RADIUS, GROWTH_ENEMY_HP_PER_TIER, growthTierForLevel } from './constants.js';
 import { disposeAndRemove, makeEmojiSprite, spawnExplosion } from './utils3d.js';
 import { player } from './player.js';
 
@@ -24,11 +24,13 @@ export function spawnEnemy(waveConfig) {
   const y = BOUND_Y_MIN + Math.random() * (BOUND_Y_MAX - BOUND_Y_MIN);
   sprite.position.set(x, y, -60);
   scene.add(sprite);
+  const hp = state.growthMode ? 1 + GROWTH_ENEMY_HP_PER_TIER * growthTierForLevel(state.level) : 1;
   enemies.push({
     mesh: sprite,
     speed: state.enemySpeed + Math.random() * 2,
     driftPhase: Math.random() * Math.PI * 2,
     spin: (Math.random() - 0.5) * 2.2,
+    hp: hp,
     removed: false
   });
 }

@@ -21,6 +21,7 @@ const pickupToastEl = document.getElementById('pickupToast');
 const hitFlashEl = document.getElementById('hitFlash');
 const bossFlashEl = document.getElementById('bossFlash');
 const difficultyButtons = Array.prototype.slice.call(document.querySelectorAll('.diff-btn'));
+const growthModeBtn = document.getElementById('growthModeBtn');
 
 export function updateHearts() {
   heartsEl.innerHTML = '';
@@ -41,11 +42,14 @@ export function updatePowerupHud() {
   }
   if (state.rapidFireTimer > 0) badges.push({ icon: '⚡', time: state.rapidFireTimer, cls: 'rapid' });
   if (state.shieldTimer > 0) badges.push({ icon: '🛡', time: state.shieldTimer, cls: 'shield' });
+  if (state.growthMode && state.growthTier > 0) {
+    badges.push({ icon: '💪 성장 ' + state.growthTier, time: null, cls: 'growth' });
+  }
 
   badges.forEach(function (b) {
     const el = document.createElement('div');
     el.className = 'powerup-badge ' + b.cls;
-    el.textContent = b.icon + ' ' + b.time.toFixed(1) + 's';
+    el.textContent = b.time == null ? b.icon : (b.icon + ' ' + b.time.toFixed(1) + 's');
     powerupHudEl.appendChild(el);
   });
 }
@@ -115,6 +119,18 @@ export function setDifficultySelection(diff) {
   difficultyButtons.forEach(function (btn) {
     btn.classList.toggle('selected', btn.dataset.difficulty === state.difficulty);
   });
+}
+
+export function initGrowthModeButton() {
+  growthModeBtn.addEventListener('click', function () {
+    setGrowthModeSelection(!state.growthMode);
+    saveSettings({ growthMode: state.growthMode });
+  });
+}
+
+export function setGrowthModeSelection(enabled) {
+  state.growthMode = !!enabled;
+  growthModeBtn.classList.toggle('selected', state.growthMode);
 }
 
 export function wireMuteButton() {

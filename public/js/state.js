@@ -25,5 +25,9 @@ export const state = {
   comboTimer: 0,
   wave: 0,
   minibossTimer: 90,
-  minibossActive: false
+  minibossActive: false,
+  growthMode: false,
+  growthTier: 0,
+  attackPower: 1,
+  attackSpeedMult: 1
 };

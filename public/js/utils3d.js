@@ -51,8 +51,9 @@ export function makeEmojiSprite(emoji, scale, glowColor) {
   return sprite;
 }
 
-export function spawnExplosion(particles, pos, color) {
-  for (let i = 0; i < 10; i++) {
+export function spawnExplosion(particles, pos, color, count) {
+  const n = count || 10;
+  for (let i = 0; i < n; i++) {
     const mat = new THREE.MeshBasicMaterial({ color: color || 0xffaa33, transparent: true, opacity: 1 });
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), mat);
     mesh.position.copy(pos);

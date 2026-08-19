@@ -1,6 +1,6 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
-import { BOSS_TYPES, MINIBOSS, BOUND_X, BOSS_LEVEL_INTERVAL, DIFFICULTY_PRESETS, ENEMY_HIT_RADIUS } from './constants.js';
+import { BOSS_TYPES, MINIBOSS, BOUND_X, BOSS_LEVEL_INTERVAL, DIFFICULTY_PRESETS, ENEMY_HIT_RADIUS, BOSS_GROWTH_HP_PER_TIER, MINIBOSS_GROWTH_HP_PER_LEVEL, growthTierForLevel } from './constants.js';
 import { disposeAndRemove, makeEmojiSprite, spawnExplosion, shakeCamera } from './utils3d.js';
 import { sfxHit, sfxExplode, sfxBossAppear } from './audio.js';
 import { showBanner, flashBoss } from './ui.js';
@@ -20,6 +20,32 @@ let bossTypeCursor = 0;
 
 function scoreMult() {
   return (DIFFICULTY_PRESETS[state.difficulty] || DIFFICULTY_PRESETS.normal).scoreMult;
+}
+
+function fireBossPattern(b, patternKey) {
+  if (patternKey === 'spread3') {
+    const base = new THREE.Vector3(
+      player.position.x - b.mesh.position.x,
+      player.position.y - b.mesh.position.y,
+      player.position.z - b.mesh.position.z
+    ).normalize();
+    [-0.28, 0, 0.28].forEach(function (offset) {
+      const dir = base.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), offset);
+      spawnEnemyBullet(b.mesh.position, dir);
+    });
+  } else if (patternKey === 'wideFan') {
+    const base = new THREE.Vector3(
+      player.position.x - b.mesh.position.x,
+      player.position.y - b.mesh.position.y,
+      player.position.z - b.mesh.position.z
+    ).normalize();
+    [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75].forEach(function (offset) {
+      const dir = base.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), offset);
+      spawnEnemyBullet(b.mesh.position, dir);
+    });
+  } else {
+    spawnEnemyBullet(b.mesh.position);
+  }
 }
 
 export function resetBoss() {
@@ -57,7 +83,8 @@ export function spawnBoss() {
   crown.position.set(0, 2.1, 0.05);
   group.add(crown);
 
-  const maxHp = 14 + state.level * 3;
+  const growthBonus = state.growthMode ? growthTierForLevel(state.level) * BOSS_GROWTH_HP_PER_TIER : 0;
+  const maxHp = 40 + state.level * 6 + growthBonus;
   group.position.set(0, 1.2, -45);
   scene.add(group);
 
@@ -69,7 +96,8 @@ export function spawnBoss() {
     phase: 'enter',
     targetZ: -9,
     driftPhase: Math.random() * Math.PI * 2,
-    fireTimer: 1.5
+    fireTimer: 1.5,
+    enraged: false
   };
   state.bossActive = true;
   bossNameEl.textContent = type.crown + ' ' + type.name;
@@ -85,10 +113,12 @@ export function spawnMiniboss() {
   const sprite = makeEmojiSprite(MINIBOSS.emoji, 2.0, 0x66aaff);
   sprite.position.set((Math.random() - 0.5) * 2 * (BOUND_X - 1.5), 1.0, -40);
   scene.add(sprite);
+  const growthBonus = state.growthMode ? Math.round(state.level * MINIBOSS_GROWTH_HP_PER_LEVEL) : 0;
+  const maxHp = MINIBOSS.hp + growthBonus;
   miniboss = {
     mesh: sprite,
-    hp: MINIBOSS.hp,
-    maxHp: MINIBOSS.hp,
+    hp: maxHp,
+    maxHp: maxHp,
     phase: 'enter',
     targetZ: -10,
     driftPhase: Math.random() * Math.PI * 2,
@@ -145,20 +175,10 @@ export function updateBoss(dt, callbacks) {
 
     boss.fireTimer -= dt;
     if (boss.fireTimer <= 0) {
-      if (boss.type.pattern === 'spread3') {
-        const base = new THREE.Vector3(
-          player.position.x - boss.mesh.position.x,
-          player.position.y - boss.mesh.position.y,
-          player.position.z - boss.mesh.position.z
-        ).normalize();
-        [-0.28, 0, 0.28].forEach(function (offset) {
-          const dir = base.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), offset);
-          spawnEnemyBullet(boss.mesh.position, dir);
-        });
-      } else {
-        spawnEnemyBullet(boss.mesh.position);
-      }
-      boss.fireTimer = Math.max(0.85, 1.7 - state.level * 0.05);
+      fireBossPattern(boss, boss.type.pattern);
+      if (boss.enraged) fireBossPattern(boss, 'spread3');
+      const baseCooldown = Math.max(0.85, 1.7 - state.level * 0.05);
+      boss.fireTimer = boss.enraged ? baseCooldown * 0.6 : baseCooldown;
     }
   }
 
@@ -167,11 +187,16 @@ export function updateBoss(dt, callbacks) {
     if (pbul.mesh.position.distanceTo(boss.mesh.position) < 1.9) {
       disposeAndRemove(pbul.mesh);
       bullets.splice(i, 1);
-      boss.hp -= 1;
+      boss.hp -= state.attackPower;
       sfxHit();
       spawnExplosion(callbacks.particles, pbul.mesh.position, 0xffd23b);
       shakeCamera(0.06, 0.15);
       bossBarFillEl.style.width = Math.max(0, (boss.hp / boss.maxHp) * 100) + '%';
+      if (!boss.enraged && boss.hp > 0 && boss.hp <= boss.maxHp * 0.5) {
+        boss.enraged = true;
+        showBanner('💢 ' + boss.type.name + ' 분노!');
+        shakeCamera(0.3, 0.4);
+      }
       if (boss.hp <= 0) {
         spawnExplosion(callbacks.particles, boss.mesh.position, 0xff5533);
         spawnExplosion(callbacks.particles, boss.mesh.position, 0xffd23b);
@@ -209,7 +234,7 @@ export function updateMiniboss(dt, callbacks) {
     if (pbul.mesh.position.distanceTo(miniboss.mesh.position) < 1.3) {
       disposeAndRemove(pbul.mesh);
       bullets.splice(i, 1);
-      miniboss.hp -= 1;
+      miniboss.hp -= state.attackPower;
       sfxHit();
       spawnExplosion(callbacks.particles, pbul.mesh.position, 0x66aaff);
       bossBarFillEl.style.width = Math.max(0, (miniboss.hp / miniboss.maxHp) * 100) + '%';

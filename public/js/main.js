@@ -1,6 +1,6 @@
 import { scene, camera, renderer, updateStarfield } from './three-scene.js';
 import { state } from './state.js';
-import { DIFFICULTY_PRESETS, BOSS_LEVEL_INTERVAL, CAMERA_FOLLOW_SPEED } from './constants.js';
+import { DIFFICULTY_PRESETS, BOSS_LEVEL_INTERVAL, CAMERA_FOLLOW_SPEED, growthTierForLevel, ATTACK_POWER_PER_TIER, ATTACK_SPEED_MULT_PER_TIER } from './constants.js';
 import { loadSettings } from './storage.js';
 import { ensureAudio, sfxHit } from './audio.js';
 import * as ui from './ui.js';
@@ -33,6 +33,22 @@ function addScore(v) {
     const baseSpeed = 6.5 + (state.level - 1) * 0.7;
     state.spawnInterval = baseSpawn * wave.spawnMult * diff.spawnMult;
     state.enemySpeed = baseSpeed * wave.speedMult * diff.speedMult;
+
+    if (state.growthMode) applyGrowthTiers();
+  }
+}
+
+function applyGrowthTiers() {
+  const targetTier = growthTierForLevel(state.level);
+  let gained = 0;
+  while (state.growthTier < targetTier) {
+    state.growthTier += 1;
+    gained += 1;
+  }
+  if (gained > 0) {
+    state.attackPower = 1 + state.growthTier * ATTACK_POWER_PER_TIER;
+    state.attackSpeedMult = Math.pow(ATTACK_SPEED_MULT_PER_TIER, state.growthTier);
+    ui.showBanner('⚡ 성장 ' + state.growthTier + '단계! 공격력·속도 UP');
   }
 }
 
@@ -82,6 +98,9 @@ function resetGame() {
   state.shieldTimer = 0;
   state.invincible = 1.8;
   state.nextBossLevel = BOSS_LEVEL_INTERVAL;
+  state.growthTier = 0;
+  state.attackPower = 1;
+  state.attackSpeedMult = 1;
   state.heartTimer = 14;
   state.powerupTimer = 18 + Math.random() * 8;
 
@@ -221,6 +240,8 @@ function boot() {
   ui.applyStoredMute(!!stored.muted);
   ui.setDifficultySelection(stored.difficulty || 'normal');
   ui.initDifficultyButtons();
+  ui.setGrowthModeSelection(!!stored.growthMode);
+  ui.initGrowthModeButton();
   ui.wireMuteButton();
   initLeaderboardUI();
   registerServiceWorker();

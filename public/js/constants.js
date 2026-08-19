@@ -31,11 +31,41 @@ export const WAVE_CONFIGS = [
 
 export const BOSS_TYPES = [
   { key: 'king',   emoji: '👹', crown: '👑', name: '적군의 왕', pattern: 'aimed',   speedMult: 1.0 },
-  { key: 'dragon', emoji: '🐲', crown: '👑', name: '폭풍룡',   pattern: 'spread3', speedMult: 1.25 }
+  { key: 'dragon', emoji: '🐲', crown: '👑', name: '폭풍룡',   pattern: 'spread3', speedMult: 1.25 },
+  { key: 'wraith', emoji: '👻', crown: '👑', name: '망령왕',   pattern: 'wideFan', speedMult: 1.1 }
 ];
 
-export const MINIBOSS = { emoji: '🛰', name: '정찰대장', hp: 5, interval: 90 };
+export const MINIBOSS = { emoji: '🛰', name: '정찰대장', hp: 12, interval: 90 };
 
 export const BOSS_LEVEL_INTERVAL = 5;
 
 export const MAX_LIVES_CAP = 4;
+
+// --- Growth Mode (opt-in) ---
+// When state.growthMode is false, growthTier stays 0, attackPower stays 1,
+// attackSpeedMult stays 1, and every formula below reduces to today's
+// default-mode values - default gameplay is unchanged.
+export const GROWTH_LEVEL_INTERVAL = 5;
+export const GROWTH_TIER_CAP = 8; // tier growth stops at level 40
+
+export const ATTACK_POWER_PER_TIER = 1;
+export const ATTACK_SPEED_MULT_PER_TIER = 0.9; // fire cooldown *= 0.9 per tier, compounding
+export const MIN_FIRE_COOLDOWN = 0.05; // hard floor so stacked attack speed can't flood bullets
+
+// Perf math (same approach used to size MAX_HOMING_BULLETS): bullet lifetime
+// ~= 65/42 ~= 1.55s. At tier 8 + rapid-fire, unfloored cooldown would be
+// 0.07 * 0.9^8 ~= 0.030s -> ~51 concurrent bullets (too many). With the
+// MIN_FIRE_COOLDOWN floor: 1.55/0.05 ~= 31 concurrent bullets - same order
+// of magnitude as the already-validated homing case (~22).
+export function growthTierForLevel(level) {
+  return Math.min(GROWTH_TIER_CAP, Math.floor(level / GROWTH_LEVEL_INTERVAL));
+}
+
+// Enemy hp grows at 2x the rate of attack power so, once any tier is active,
+// regular enemies converge on taking ~2 hits (never 1, never a bullet-sponge):
+//   tier 1: hp=1+2=3,   power=1+1=2 -> ceil(3/2)=2 hits
+//   tier 8: hp=1+16=17, power=1+8=9 -> ceil(17/9)=2 hits
+export const GROWTH_ENEMY_HP_PER_TIER = 2;
+
+export const BOSS_GROWTH_HP_PER_TIER = 6;        // added to boss maxHp per tier
+export const MINIBOSS_GROWTH_HP_PER_LEVEL = 1.4; // added to miniboss maxHp per level
