@@ -61,10 +61,22 @@ export function growthTierForLevel(level) {
   return Math.min(GROWTH_TIER_CAP, Math.floor(level / GROWTH_LEVEL_INTERVAL));
 }
 
+// Deliberately UNCAPPED (unlike growthTierForLevel above): the player's own
+// power plateaus at GROWTH_TIER_CAP for safety/balance, but enemies/bosses
+// should keep getting tougher forever as the run goes on, so the game never
+// goes flat/easy in a long endless session - only enemyGrowthFactor(),
+// used for enemy/boss hp, keeps climbing past level 40.
+export function enemyGrowthFactor(level) {
+  return Math.floor(level / GROWTH_LEVEL_INTERVAL);
+}
+
 // Enemy hp grows at 2x the rate of attack power so, once any tier is active,
-// regular enemies converge on taking ~2 hits (never 1, never a bullet-sponge):
-//   tier 1: hp=1+2=3,   power=1+1=2 -> ceil(3/2)=2 hits
-//   tier 8: hp=1+16=17, power=1+8=9 -> ceil(17/9)=2 hits
+// regular enemies converge on taking ~2 hits before the tier cap (level 40);
+// past that, attackPower is frozen but hp keeps climbing via
+// enemyGrowthFactor(), so hits-to-kill slowly increases in a long run:
+//   tier 1 (level 5-9):    hp=1+2*1=3,   power=1+1*1=2 -> ceil(3/2)=2 hits
+//   level 40 (tier cap):   hp=1+2*8=17,  power=1+1*8=9 -> ceil(17/9)=2 hits
+//   level 80 (past cap):   hp=1+2*16=33, power stays 9 -> ceil(33/9)=4 hits
 export const GROWTH_ENEMY_HP_PER_TIER = 2;
 
 export const BOSS_GROWTH_HP_PER_TIER = 6;        // added to boss maxHp per tier

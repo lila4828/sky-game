@@ -1,6 +1,6 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
-import { BOSS_TYPES, MINIBOSS, BOUND_X, BOSS_LEVEL_INTERVAL, DIFFICULTY_PRESETS, ENEMY_HIT_RADIUS, BOSS_GROWTH_HP_PER_TIER, MINIBOSS_GROWTH_HP_PER_LEVEL, growthTierForLevel } from './constants.js';
+import { BOSS_TYPES, MINIBOSS, BOUND_X, BOSS_LEVEL_INTERVAL, DIFFICULTY_PRESETS, ENEMY_HIT_RADIUS, BOSS_GROWTH_HP_PER_TIER, MINIBOSS_GROWTH_HP_PER_LEVEL, enemyGrowthFactor } from './constants.js';
 import { disposeAndRemove, makeEmojiSprite, spawnExplosion, shakeCamera } from './utils3d.js';
 import { sfxHit, sfxExplode, sfxBossAppear } from './audio.js';
 import { showBanner, flashBoss } from './ui.js';
@@ -83,7 +83,7 @@ export function spawnBoss() {
   crown.position.set(0, 2.1, 0.05);
   group.add(crown);
 
-  const growthBonus = state.growthMode ? growthTierForLevel(state.level) * BOSS_GROWTH_HP_PER_TIER : 0;
+  const growthBonus = state.growthMode ? enemyGrowthFactor(state.level) * BOSS_GROWTH_HP_PER_TIER : 0;
   const maxHp = 40 + state.level * 6 + growthBonus;
   group.position.set(0, 1.2, -45);
   scene.add(group);
