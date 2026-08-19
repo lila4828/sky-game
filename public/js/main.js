@@ -79,6 +79,7 @@ function resetGame() {
   state.spawnInterval = 1.1 * diff.spawnMult;
   state.enemySpeed = 6.5 * diff.speedMult;
   state.fireCooldown = 0;
+  state.shieldTimer = 0;
   state.invincible = 1.8;
   state.nextBossLevel = BOSS_LEVEL_INTERVAL;
   state.heartTimer = 14;

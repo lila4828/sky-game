@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skywarrior-shell-v1';
+const CACHE_NAME = 'skywarrior-shell-v2';
 const SHELL_ASSETS = [
   '/',
   '/css/style.css',
@@ -47,14 +47,25 @@ self.addEventListener('fetch', function (event) {
   if (url.pathname.startsWith('/api/')) {
     return; // let the network handle live data (leaderboard, stats)
   }
+
+  const isNavigation = event.request.mode === 'navigate';
+
+  // Network-first so online players always get the latest shipped code;
+  // cache is only a fallback for offline play, and only successful
+  // responses are cached so a transient 5xx never gets stuck as "the" cache.
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      return cached || fetch(event.request).then(function (res) {
-        return caches.open(CACHE_NAME).then(function (cache) {
-          cache.put(event.request, res.clone());
-          return res;
-        });
+    fetch(event.request).then(function (res) {
+      if (res.ok) {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, resClone); });
+      }
+      return res;
+    }).catch(function () {
+      return caches.match(event.request).then(function (cached) {
+        if (cached) return cached;
+        if (isNavigation) return caches.match('/');
+        return Response.error();
       });
-    }).catch(function () { return caches.match('/'); })
+    })
   );
 });

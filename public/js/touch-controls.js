@@ -35,6 +35,7 @@ function bindJoystick(keys) {
   }
 
   base.addEventListener('pointerdown', function (ev) {
+    if (activePointerId !== null) return;
     ev.preventDefault();
     activePointerId = ev.pointerId;
     base.setPointerCapture(activePointerId);

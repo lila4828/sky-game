@@ -9,7 +9,10 @@ export const enemies = [];
 const DEFAULT_POOL = ['👾', '👽', '🛸', '💀', '🐙', '🦇', '🐉', '🦂'];
 
 export function resetEnemies() {
-  for (let i = enemies.length - 1; i >= 0; i--) disposeAndRemove(enemies[i].mesh);
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    enemies[i].removed = true;
+    disposeAndRemove(enemies[i].mesh);
+  }
   enemies.length = 0;
 }
 

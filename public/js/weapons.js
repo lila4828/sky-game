@@ -72,8 +72,10 @@ export function trySpawnBullet(dt, keys) {
     addBullet(origin, new THREE.Vector3(0, 0, -speed), 1);
   }
 
-  if (spawned) sfxShoot();
-  state.fireCooldown = state.rapidFireTimer > 0 ? 0.07 : 0.18;
+  if (spawned) {
+    sfxShoot();
+    state.fireCooldown = state.rapidFireTimer > 0 ? 0.07 : 0.18;
+  }
 }
 
 function findNearestEnemy(pos) {
