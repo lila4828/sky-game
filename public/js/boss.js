@@ -1,6 +1,6 @@
 import { scene } from './three-scene.js';
 import { state } from './state.js';
-import { BOSS_TYPES, MINIBOSS, BOUND_X } from './constants.js';
+import { BOSS_TYPES, MINIBOSS, BOUND_X, BOSS_LEVEL_INTERVAL, DIFFICULTY_PRESETS } from './constants.js';
 import { disposeAndRemove, makeEmojiSprite, spawnExplosion, shakeCamera } from './utils3d.js';
 import { sfxHit, sfxExplode, sfxBossAppear } from './audio.js';
 import { showBanner, flashBoss } from './ui.js';
@@ -17,6 +17,10 @@ const bossNameEl = document.getElementById('bossName');
 const bossBarFillEl = document.getElementById('bossBarFill');
 
 let bossTypeCursor = 0;
+
+function scoreMult() {
+  return (DIFFICULTY_PRESETS[state.difficulty] || DIFFICULTY_PRESETS.normal).scoreMult;
+}
 
 export function resetBoss() {
   if (boss) { disposeAndRemove(boss.mesh); boss = null; }
@@ -103,7 +107,7 @@ function endBoss(defeated) {
   bossBarEl.classList.add('hidden');
   if (boss) { disposeAndRemove(boss.mesh); boss = null; }
   if (defeated) {
-    state.nextBossScore = state.score + 650 + state.level * 90;
+    state.nextBossLevel = state.level + BOSS_LEVEL_INTERVAL;
   }
 }
 
@@ -116,7 +120,7 @@ function endMiniboss(defeated) {
 }
 
 export function maybeSpawnEncounters(dt) {
-  if (!state.bossActive && state.score >= state.nextBossScore) {
+  if (!state.bossActive && state.level >= state.nextBossLevel) {
     spawnBoss();
   }
   if (!state.bossActive && !state.minibossActive) {
@@ -173,7 +177,7 @@ export function updateBoss(dt, callbacks) {
         spawnExplosion(callbacks.particles, boss.mesh.position, 0xffd23b);
         sfxExplode();
         shakeCamera(0.35, 0.5);
-        callbacks.addScore(200 + state.level * 20);
+        callbacks.addScore(Math.round((200 + state.level * 20) * scoreMult()));
         endBoss(true);
         break;
       }
@@ -212,7 +216,7 @@ export function updateMiniboss(dt, callbacks) {
       if (miniboss.hp <= 0) {
         spawnExplosion(callbacks.particles, miniboss.mesh.position, 0x66aaff);
         sfxExplode();
-        callbacks.addScore(60 + state.level * 8);
+        callbacks.addScore(Math.round((60 + state.level * 8) * scoreMult()));
         endMiniboss(true);
         break;
       }

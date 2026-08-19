@@ -1,6 +1,6 @@
 import { scene, camera, renderer, updateStarfield } from './three-scene.js';
 import { state } from './state.js';
-import { DIFFICULTY_PRESETS } from './constants.js';
+import { DIFFICULTY_PRESETS, BOSS_LEVEL_INTERVAL } from './constants.js';
 import { loadSettings } from './storage.js';
 import { ensureAudio, sfxHit } from './audio.js';
 import * as ui from './ui.js';
@@ -80,7 +80,7 @@ function resetGame() {
   state.enemySpeed = 6.5 * diff.speedMult;
   state.fireCooldown = 0;
   state.invincible = 1.8;
-  state.nextBossScore = 500;
+  state.nextBossLevel = BOSS_LEVEL_INTERVAL;
   state.heartTimer = 14;
   state.powerupTimer = 18 + Math.random() * 8;
 

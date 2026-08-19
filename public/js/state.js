@@ -1,3 +1,5 @@
+import { BOSS_LEVEL_INTERVAL } from './constants.js';
+
 export const state = {
   running: false,
   paused: false,
@@ -11,7 +13,7 @@ export const state = {
   enemySpeed: 6.5,
   fireCooldown: 0,
   invincible: 0,
-  nextBossScore: 500,
+  nextBossLevel: BOSS_LEVEL_INTERVAL,
   bossActive: false,
   heartTimer: 12,
   powerupTimer: 18,

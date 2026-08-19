@@ -4,9 +4,9 @@ export const BOUND_Y_MAX = 3.6;
 export const MOVE_SPEED = 7;
 
 export const DIFFICULTY_PRESETS = {
-  easy:   { label: '쉬움',   lives: 4, spawnMult: 1.3,  speedMult: 0.85 },
-  normal: { label: '보통',   lives: 3, spawnMult: 1.0,  speedMult: 1.0 },
-  hard:   { label: '어려움', lives: 2, spawnMult: 0.75, speedMult: 1.2 }
+  easy:   { label: '쉬움',   lives: 4, spawnMult: 1.3,  speedMult: 0.85, scoreMult: 0.8 },
+  normal: { label: '보통',   lives: 3, spawnMult: 1.0,  speedMult: 1.0,  scoreMult: 1.0 },
+  hard:   { label: '어려움', lives: 2, spawnMult: 0.75, speedMult: 1.2,  scoreMult: 1.3 }
 };
 
 export const WEAPON_DEFS = {
@@ -30,5 +30,7 @@ export const BOSS_TYPES = [
 ];
 
 export const MINIBOSS = { emoji: '🛰', name: '정찰대장', hp: 5, interval: 90 };
+
+export const BOSS_LEVEL_INTERVAL = 5;
 
 export const MAX_LIVES_CAP = 4;
